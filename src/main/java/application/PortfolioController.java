@@ -16,28 +16,29 @@ class PortfolioController {
         this.portfolioRepository = portfolioRepository;
     }
 
-    @RequestMapping(method = RequestMethod.POST)
+    @PostMapping
     public Portfolio add(@RequestBody Portfolio input) {
-        return this.portfolioRepository.save(
+        return portfolioRepository.save(
                 new Portfolio(input.getName(), input.getDescription()));
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public List<Portfolio> index() {
-        return this.portfolioRepository.findAll();
+        return portfolioRepository.findAll();
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/{portfolioId}")
+    @GetMapping("/{portfolioId}")
     public Portfolio getById(@PathVariable long portfolioId) {
-        return this.portfolioRepository.findOne(portfolioId);
+        return portfolioRepository.findOne(portfolioId);
     }
 
-    @RequestMapping(method = RequestMethod.DELETE, value = "/{portfolioId}")
-    public void delete(@PathVariable long portfolioId) throws Exception {
-        Portfolio portfolio = getById(portfolioId);
+    @DeleteMapping("/{portfolioId}")
+    public void delete(@PathVariable long portfolioId) throws ResourceNotFoundException {
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         if (portfolio == null) {
-            throw new Exception("Portfolio does not exist");
+            throw new ResourceNotFoundException(String.format(
+                "The portfolio with id %d does not exist", portfolioId));
         }
-        this.portfolioRepository.delete(portfolio);
+        portfolioRepository.delete(portfolio);
     }
 }
