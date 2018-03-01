@@ -27,18 +27,30 @@ class PortfolioController {
         return portfolioRepository.findAll();
     }
 
+    @PutMapping("/{portfolioId}")
+    public Portfolio edit(@PathVariable long portfolioId, @RequestBody Portfolio input) {
+        Portfolio portfolio = findOne(portfolioId);
+        portfolio.update(input);
+        return portfolioRepository.save(portfolio);
+    }
+
     @GetMapping("/{portfolioId}")
     public Portfolio getById(@PathVariable long portfolioId) {
-        return portfolioRepository.findOne(portfolioId);
+        return findOne(portfolioId);
     }
 
     @DeleteMapping("/{portfolioId}")
     public void delete(@PathVariable long portfolioId) throws ResourceNotFoundException {
+        Portfolio portfolio = findOne(portfolioId);
+        portfolioRepository.delete(portfolio);
+    }
+
+    private Portfolio findOne(long portfolioId) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         if (portfolio == null) {
             throw new ResourceNotFoundException(String.format(
-                "The portfolio with id %d does not exist", portfolioId));
+                    "The portfolio with id %d does not exist", portfolioId));
         }
-        portfolioRepository.delete(portfolio);
+        return portfolio;
     }
 }

@@ -1,5 +1,6 @@
 package application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,8 +15,7 @@ import java.nio.charset.Charset;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -29,9 +29,12 @@ public class PortfolioControllerTest {
     @Autowired
     private PortfolioRepository portfolioRepository;
 
+    @Autowired
+    ObjectMapper objectMapper;
+
     private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
-        MediaType.APPLICATION_JSON.getSubtype(),
-        Charset.forName("utf8"));
+            MediaType.APPLICATION_JSON.getSubtype(),
+            Charset.forName("utf8"));
 
     @Before
     public void setup() {
@@ -43,39 +46,75 @@ public class PortfolioControllerTest {
     @Test
     public void getPortfolioList() throws Exception {
         mvc.perform(get("/portfolio").accept(contentType))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(contentType))
-            .andExpect(jsonPath("$", hasSize(2)))
-            .andExpect(jsonPath("$[0].name", is("Test Name 1")))
-            .andExpect(jsonPath("$[0].description", is("Test Description 1")))
-            .andExpect(jsonPath("$[1].name", is("Test Name 2")))
-            .andExpect(jsonPath("$[1].description", is("Test Description 2")));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].name", is("Test Name 1")))
+                .andExpect(jsonPath("$[0].description", is("Test Description 1")))
+                .andExpect(jsonPath("$[1].name", is("Test Name 2")))
+                .andExpect(jsonPath("$[1].description", is("Test Description 2")));
     }
 
     @Test
     public void getPortfolioById() throws Exception {
         long id = portfolioRepository.findAll().get(0).getId();
         mvc.perform(get("/portfolio/" + id).accept(contentType))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(contentType))
-            .andExpect(jsonPath("$.name", is("Test Name 1")))
-            .andExpect(jsonPath("$.description", is("Test Description 1")));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.name", is("Test Name 1")))
+                .andExpect(jsonPath("$.description", is("Test Description 1")));
+    }
+
+    @Test
+    public void getPortfolioByIdThrows404ErrorWhenIdNotFound() throws Exception {
+        mvc.perform(get("/portfolio/1000").accept(contentType))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     public void deletePortfolio() throws Exception {
         long id = portfolioRepository.findAll().get(0).getId();
         mvc.perform(delete("/portfolio/" + id).accept(contentType))
-            .andExpect(status().isOk());
+                .andExpect(status().isOk());
 
         mvc.perform(get("/portfolio").accept(contentType))
-            .andExpect(jsonPath("$", hasSize(1)))
-            .andExpect(jsonPath("$[0].name", is("Test Name 2")));
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name", is("Test Name 2")));
     }
 
     @Test
     public void deletePortfolioThrows404ErrorWhenIdNotFound() throws Exception {
-        mvc.perform(delete("/portfolio/3").accept(contentType))
-            .andExpect(status().isNotFound());
+        mvc.perform(delete("/portfolio/1000").accept(contentType))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void updatePortfolio() throws Exception {
+        Portfolio portfolio = new Portfolio("Test New Name", "Test new description");
+        long id = portfolioRepository.findAll().get(0).getId();
+        mvc.perform(put("/portfolio/" + id).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(jsonPath("$.name", is("Test New Name")))
+                .andExpect(jsonPath("$.description", is("Test new description")));
+    }
+
+    @Test
+    public void updatePortfolioThrows404ErrorWhenIdNotFound() throws Exception {
+        Portfolio portfolio = new Portfolio("Test New Name", "Test new description");
+        mvc.perform(put("/portfolio/1000").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void addPortfolio() throws Exception {
+        Portfolio portfolio = new Portfolio("Test Add Name", "Test add description");
+        mvc.perform(post("/portfolio").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(jsonPath("$.name", is("Test Add Name")))
+                .andExpect(jsonPath("$.description", is("Test add description")));
     }
 }

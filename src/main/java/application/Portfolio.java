@@ -13,7 +13,8 @@ public class Portfolio {
     private String name;
     private String description;
 
-    private Portfolio() {}
+    private Portfolio() {
+    }
 
     public Portfolio(String name, String description) {
         this.name = name;
@@ -30,5 +31,10 @@ public class Portfolio {
 
     public String getDescription() {
         return description;
+    }
+
+    public void update(Portfolio portfolio) {
+        this.name = portfolio.name;
+        this.description = portfolio.description;
     }
 }
