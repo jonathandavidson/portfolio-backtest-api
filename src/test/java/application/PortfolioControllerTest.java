@@ -23,6 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class PortfolioControllerTest {
 
+    private String basePath = "/portfolios";
+
     @Autowired
     private MockMvc mvc;
 
@@ -45,7 +47,7 @@ public class PortfolioControllerTest {
 
     @Test
     public void getPortfolioList() throws Exception {
-        mvc.perform(get("/portfolio").accept(contentType))
+        mvc.perform(get(basePath).accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -58,7 +60,7 @@ public class PortfolioControllerTest {
     @Test
     public void getPortfolioById() throws Exception {
         long id = portfolioRepository.findAll().get(0).getId();
-        mvc.perform(get("/portfolio/" + id).accept(contentType))
+        mvc.perform(get(basePath + "/" + id).accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$.name", is("Test Name 1")))
@@ -67,24 +69,24 @@ public class PortfolioControllerTest {
 
     @Test
     public void getPortfolioByIdThrows404ErrorWhenIdNotFound() throws Exception {
-        mvc.perform(get("/portfolio/1000").accept(contentType))
+        mvc.perform(get(basePath + "/1000").accept(contentType))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void deletePortfolio() throws Exception {
         long id = portfolioRepository.findAll().get(0).getId();
-        mvc.perform(delete("/portfolio/" + id).accept(contentType))
+        mvc.perform(delete(basePath + "/" + id).accept(contentType))
                 .andExpect(status().isOk());
 
-        mvc.perform(get("/portfolio").accept(contentType))
+        mvc.perform(get(basePath).accept(contentType))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name", is("Test Name 2")));
     }
 
     @Test
     public void deletePortfolioThrows404ErrorWhenIdNotFound() throws Exception {
-        mvc.perform(delete("/portfolio/1000").accept(contentType))
+        mvc.perform(delete(basePath + "/1000").accept(contentType))
                 .andExpect(status().isNotFound());
     }
 
@@ -92,7 +94,7 @@ public class PortfolioControllerTest {
     public void updatePortfolio() throws Exception {
         Portfolio portfolio = new Portfolio("Test New Name", "Test new description");
         long id = portfolioRepository.findAll().get(0).getId();
-        mvc.perform(put("/portfolio/" + id).accept(contentType)
+        mvc.perform(put(basePath + "/" + id).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(portfolio)))
                 .andExpect(jsonPath("$.name", is("Test New Name")))
@@ -102,7 +104,7 @@ public class PortfolioControllerTest {
     @Test
     public void updatePortfolioThrows404ErrorWhenIdNotFound() throws Exception {
         Portfolio portfolio = new Portfolio("Test New Name", "Test new description");
-        mvc.perform(put("/portfolio/1000").accept(contentType)
+        mvc.perform(put(basePath + "/1000").accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(portfolio)))
                 .andExpect(status().isNotFound());
@@ -111,7 +113,7 @@ public class PortfolioControllerTest {
     @Test
     public void addPortfolio() throws Exception {
         Portfolio portfolio = new Portfolio("Test Add Name", "Test add description");
-        mvc.perform(post("/portfolio").accept(contentType)
+        mvc.perform(post(basePath).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(portfolio)))
                 .andExpect(jsonPath("$.name", is("Test Add Name")))
