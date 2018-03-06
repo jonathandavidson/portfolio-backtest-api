@@ -20,7 +20,7 @@ public class SecurityTest {
         security.addPrice(new Date(1516406400000L), BigDecimal.valueOf(3.5));
         security.addPrice(new Date(1515110400000L), BigDecimal.valueOf(1.5));
 
-        for (Order order:orders) {
+        for (Order order : orders) {
             security.addOrder(order);
         }
 
@@ -32,7 +32,8 @@ public class SecurityTest {
         return new Order(type, quantity, new Date(timestamp));
     }
 
-    @Test public void getOrdersReturnsAddedOrdersSortedByDate() throws InvalidOrderException {
+    @Test
+    public void getOrdersReturnsAddedOrdersSortedByDate() throws InvalidOrderException {
         List<Order> expectedOrders = new ArrayList<>();
         expectedOrders.add(createOrder(OrderType.BUY, 1, 1515110400000L));
         expectedOrders.add(createOrder(OrderType.SELL, -1, 1515542400000L));
@@ -46,9 +47,11 @@ public class SecurityTest {
         assertEquals(expectedOrders.get(1), orders.get(2));
     }
 
-    @Rule public ExpectedException thrown = ExpectedException.none();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
-    @Test public void addOrderThrowsExceptionWhenSellingMoreUnitsThanOwned() throws InvalidOrderException {
+    @Test
+    public void addOrderThrowsExceptionWhenSellingMoreUnitsThanOwned() throws InvalidOrderException {
         List<Order> expectedOrders = new ArrayList<>();
         expectedOrders.add(createOrder(OrderType.BUY, 2, 1514764800000L));
         expectedOrders.add(createOrder(OrderType.SELL, -1, 1514764900000L));
@@ -63,7 +66,8 @@ public class SecurityTest {
         security.addOrder(order3);
     }
 
-    @Test public void getHoldingReturnsCorrectlyCalculatedHolding() throws InvalidOrderException {
+    @Test
+    public void getHoldingReturnsCorrectlyCalculatedHolding() throws InvalidOrderException {
         List<Order> expectedOrders = new ArrayList<>();
         expectedOrders.add(createOrder(OrderType.BUY, 5, 1514764800000L));
         expectedOrders.add(createOrder(OrderType.SELL, -1, 1515110400000L));
