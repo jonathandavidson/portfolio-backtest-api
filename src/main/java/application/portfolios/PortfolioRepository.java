@@ -1,4 +1,4 @@
-package application;
+package application.portfolios;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

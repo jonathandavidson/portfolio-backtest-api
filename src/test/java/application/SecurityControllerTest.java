@@ -1,5 +1,7 @@
 package application;
 
+import application.securities.Security;
+import application.securities.SecurityRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

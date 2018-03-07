@@ -1,4 +1,4 @@
-package application;
+package application.securities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
