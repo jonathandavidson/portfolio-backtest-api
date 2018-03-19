@@ -2,6 +2,8 @@ package application;
 
 import application.orders.Order;
 import application.orders.OrderRepository;
+import application.securities.Security;
+import application.securities.SecurityRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,13 +34,18 @@ public class OrderControllerTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private SecurityRepository securityRepository;
+
     private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
     @Before
     public void setup() {
-        orderRepository.save(new Order(OrderType.BUY, 5, new Date(1514764800000L)));
+        securityRepository.save(new Security("TEST"));
+        orderRepository.save(new Order(OrderType.BUY,
+                securityRepository.findBySymbol("TEST"), 5, new Date(1514764800000L)));
     }
 
     @Test
@@ -49,7 +56,8 @@ public class OrderControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].quantity", is(5)))
                 .andExpect(jsonPath("$[0].date", is(1514764800000L)))
-                .andExpect((jsonPath("$[0].type", is("BUY"))));
+                .andExpect((jsonPath("$[0].type", is("BUY"))))
+                .andExpect((jsonPath("$[0].security.symbol", is("TEST"))));
     }
 
 }
