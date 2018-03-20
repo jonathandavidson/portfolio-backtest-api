@@ -2,6 +2,8 @@ package application;
 
 import application.orders.Order;
 import application.orders.OrderRepository;
+import application.portfolios.Portfolio;
+import application.portfolios.PortfolioRepository;
 import application.securities.Security;
 import application.securities.SecurityRepository;
 import org.junit.Before;
@@ -35,29 +37,44 @@ public class OrderControllerTest {
     private OrderRepository orderRepository;
 
     @Autowired
+    private PortfolioRepository portfolioRepository;
+
+    @Autowired
     private SecurityRepository securityRepository;
 
     private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
+    private void setupOrder(Portfolio portfolio, String securitySymbol, int quantity) {
+        securityRepository.save(new Security(securitySymbol));
+        portfolioRepository.save(portfolio);
+        orderRepository.save(new Order(portfolio,
+                OrderType.BUY, securityRepository.findBySymbol(securitySymbol), quantity, new Date(1514764800000L)));
+    }
+
     @Before
     public void setup() {
-        securityRepository.save(new Security("TEST"));
-        orderRepository.save(new Order(OrderType.BUY,
-                securityRepository.findBySymbol("TEST"), 5, new Date(1514764800000L)));
+        Portfolio testPortfolio1 = new Portfolio("Test Portfolio1", "");
+        Portfolio testPortfolio2 = new Portfolio("Test Portfolio2", "");
+
+        setupOrder(testPortfolio1, "FOO", 1);
+        setupOrder(testPortfolio2, "BAR", 2);
+        setupOrder(testPortfolio1, "BAZ", 3);
     }
 
     @Test
     public void getOrders() throws Exception {
-        mvc.perform(get("/orders").accept(contentType))
+        long portfolio = portfolioRepository.findAll().get(0).getId();
+
+        mvc.perform(get("/portfolios/" + portfolio + "/orders").accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].quantity", is(5)))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].quantity", is(1)))
                 .andExpect(jsonPath("$[0].date", is(1514764800000L)))
                 .andExpect((jsonPath("$[0].type", is("BUY"))))
-                .andExpect((jsonPath("$[0].security.symbol", is("TEST"))));
+                .andExpect((jsonPath("$[0].security.symbol", is("FOO"))));
     }
 
 }
