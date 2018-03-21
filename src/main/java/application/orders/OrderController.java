@@ -1,8 +1,10 @@
 package application.orders;
 
+import application.ResourceNotFoundException;
 import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +28,24 @@ public class OrderController {
     public List<Order> index(@PathVariable long portfolioId) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         return this.orderRepository.findByPortfolio(portfolio);
+    }
+
+    @DeleteMapping("/portfolios/{portfolioId}/orders/{orderId}")
+    public void delete(@PathVariable long portfolioId, @PathVariable long orderId) {
+        Order order = findOne(orderId, portfolioId);
+        orderRepository.delete(order);
+    }
+
+    private Order findOne(long orderId, long portfolioId) {
+        Order order = orderRepository.findOne(orderId);
+        if (order == null) {
+            throw new ResourceNotFoundException(String.format(
+                    "The order with id %d does not exist", orderId));
+        } else if (order.getPortfolioId() != portfolioId) {
+            throw new ResourceNotFoundException((String.format(
+                    "The order with id %d does not exist in portfolio with id %d", orderId, portfolioId)));
+        }
+        return order;
     }
 
 }

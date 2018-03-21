@@ -58,4 +58,8 @@ public class Order {
         return date;
     }
 
+    public long getPortfolioId() {
+        return portfolio.getId();
+    }
+
 }

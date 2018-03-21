@@ -22,6 +22,7 @@ import java.util.Date;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -55,6 +56,10 @@ public class OrderControllerTest {
 
     @Before
     public void setup() {
+        orderRepository.deleteAllInBatch();
+        portfolioRepository.deleteAllInBatch();
+        securityRepository.deleteAllInBatch();
+
         Portfolio testPortfolio1 = new Portfolio("Test Portfolio1", "");
         Portfolio testPortfolio2 = new Portfolio("Test Portfolio2", "");
 
@@ -65,9 +70,9 @@ public class OrderControllerTest {
 
     @Test
     public void getOrders() throws Exception {
-        long portfolio = portfolioRepository.findAll().get(0).getId();
+        long portfolioId = portfolioRepository.findAll().get(0).getId();
 
-        mvc.perform(get("/portfolios/" + portfolio + "/orders").accept(contentType))
+        mvc.perform(get("/portfolios/" + portfolioId + "/orders").accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -77,4 +82,45 @@ public class OrderControllerTest {
                 .andExpect((jsonPath("$[0].security.symbol", is("FOO"))));
     }
 
+    @Test
+    public void deleteOrder() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+        long portfolioId = order.getPortfolioId();
+
+        mvc.perform(delete("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/portfolios/" + portfolioId + "/orders/").accept(contentType))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].security.symbol", is("BAZ")));
+    }
+
+    @Test
+    public void deleteOrderThrows404ErrorWhenOrderIdNotFound() throws Exception {
+        long portfolioId = portfolioRepository.findAll().get(0).getId();
+        mvc.perform(delete("/portfolios/" + portfolioId + "/1000").accept(contentType))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteOrderThrows404ErrorWhenPortfolioIdNotFound() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+
+        mvc.perform(delete("/portfolios/1000/orders/" + orderId).accept(contentType))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void deleteOrderThrows404ErrorWhenOrderIdNotFoundInPortfolio() throws Exception {
+        long orderId = orderRepository.findAll().get(0).getId();
+
+        Order order = orderRepository.findAll().get(1);
+        long portfolioId = order.getPortfolioId();
+
+        mvc.perform(delete("/portfolios/" + portfolioId + "/orders/" + orderId).accept(contentType))
+                .andExpect(status().isNotFound());
+    }
 }
