@@ -6,6 +6,7 @@ import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import application.securities.Security;
 import application.securities.SecurityRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,8 +23,7 @@ import java.util.Date;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -42,6 +42,9 @@ public class OrderControllerTest {
 
     @Autowired
     private SecurityRepository securityRepository;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
@@ -100,7 +103,7 @@ public class OrderControllerTest {
     @Test
     public void deleteOrderThrows404ErrorWhenOrderIdNotFound() throws Exception {
         long portfolioId = portfolioRepository.findAll().get(0).getId();
-        mvc.perform(delete("/portfolios/" + portfolioId + "/1000").accept(contentType))
+        mvc.perform(delete("/portfolios/" + portfolioId + "/orders/1000").accept(contentType))
                 .andExpect(status().isNotFound());
     }
 
@@ -122,5 +125,25 @@ public class OrderControllerTest {
 
         mvc.perform(delete("/portfolios/" + portfolioId + "/orders/" + orderId).accept(contentType))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void addOrder() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+
+        Order order = new Order(portfolio,
+                OrderType.BUY, securityRepository.findBySymbol("FOO"), 10, new Date(1514764800001L));
+
+        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.date", is(1514764800001L)))
+                .andExpect((jsonPath("$.type", is("BUY"))))
+                .andExpect((jsonPath("$.security.symbol", is("FOO"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolio.getId()))));
+
     }
 }

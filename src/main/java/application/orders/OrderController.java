@@ -4,10 +4,7 @@ import application.ResourceNotFoundException;
 import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,6 +25,13 @@ public class OrderController {
     public List<Order> index(@PathVariable long portfolioId) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         return this.orderRepository.findByPortfolio(portfolio);
+    }
+
+    @PostMapping("/portfolios/{portfolioId}/orders")
+    public Order add(@PathVariable long portfolioId, @RequestBody Order input) {
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+        return orderRepository.save(
+                new Order(portfolio, input.getType(), input.getSecurity(), input.getQuantity(), input.getDate()));
     }
 
     @DeleteMapping("/portfolios/{portfolioId}/orders/{orderId}")
