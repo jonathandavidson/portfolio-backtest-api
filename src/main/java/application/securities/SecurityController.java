@@ -1,9 +1,7 @@
 package application.securities;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -16,6 +14,12 @@ class SecurityController {
     @Autowired
     SecurityController(SecurityRepository securityRepository) {
         this.securityRepository = securityRepository;
+    }
+
+    @PostMapping
+    public Security add(@RequestBody Security input) {
+        return securityRepository.save(
+                new Security(input.getSymbol()));
     }
 
     @GetMapping

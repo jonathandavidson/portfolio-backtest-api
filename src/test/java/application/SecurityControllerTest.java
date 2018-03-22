@@ -2,6 +2,7 @@ package application;
 
 import application.securities.Security;
 import application.securities.SecurityRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +18,7 @@ import java.nio.charset.Charset;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -29,6 +31,9 @@ public class SecurityControllerTest {
 
     @Autowired
     private SecurityRepository securityRepository;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
@@ -48,6 +53,15 @@ public class SecurityControllerTest {
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].symbol", is("TEST")))
                 .andExpect(jsonPath("$[1].symbol", is("TEST2")));
+    }
+
+    @Test
+    public void addSecurity() throws Exception {
+        Security security = new Security("FOO");
+        mvc.perform(post("/securities").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(security)))
+                .andExpect(jsonPath("$.symbol", is("FOO")));
     }
 
 }
