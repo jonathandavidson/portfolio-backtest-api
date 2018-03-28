@@ -144,6 +144,79 @@ public class OrderControllerTest {
                 .andExpect((jsonPath("$.type", is("BUY"))))
                 .andExpect((jsonPath("$.security.symbol", is("FOO"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolio.getId()))));
-
     }
+
+    @Test
+    public void updateOrder() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+        long portfolioId = order.getPortfolioId();
+
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+
+        Order newOrder = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.date", is(1514764800001L)))
+                .andExpect((jsonPath("$.type", is("SELL"))))
+                .andExpect((jsonPath("$.security.symbol", is("BAR"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+    }
+
+    @Test
+    public void updateOrderThrows404ErrorWhenOrderIdNotFound() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+
+        Order newOrder = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/" + portfolio.getId() + "/orders/1000")
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void updateOrderThrows404ErrorWhenPortfolioIdNotFound() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+
+        Order newOrder = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/1000/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void updateOrderThrows404ErrorWhenOrderIdNotFoundInPortfolio() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+        long portfolioId = portfolioRepository.findAll().get(1).getId();
+
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+
+        Order newOrder = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
+                .andExpect(status().isNotFound());
+    }
+
 }

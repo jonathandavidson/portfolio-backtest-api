@@ -34,6 +34,13 @@ public class OrderController {
                 new Order(portfolio, input.getType(), input.getSecurity(), input.getQuantity(), input.getDate()));
     }
 
+    @PutMapping("/portfolios/{portfolioId}/orders/{orderId}")
+    public Order add(@PathVariable long portfolioId, @PathVariable long orderId, @RequestBody Order input) {
+        Order order = findOne(orderId, portfolioId);
+        order.update(input);
+        return orderRepository.save(order);
+    }
+
     @DeleteMapping("/portfolios/{portfolioId}/orders/{orderId}")
     public void delete(@PathVariable long portfolioId, @PathVariable long orderId) {
         Order order = findOne(orderId, portfolioId);

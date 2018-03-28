@@ -62,4 +62,11 @@ public class Order {
         return portfolio.getId();
     }
 
+    public void update(Order order) {
+        this.type = order.getType();
+        this.security = order.getSecurity();
+        this.quantity = order.getQuantity();
+        this.date = order.getDate();
+    }
+
 }
