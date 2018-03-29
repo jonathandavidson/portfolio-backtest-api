@@ -1,8 +1,9 @@
 package application.portfolios;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import application.orders.Order;
+
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class Portfolio {
@@ -10,8 +11,13 @@ public class Portfolio {
     @Id
     @GeneratedValue
     private long id;
+
     private String name;
+
     private String description;
+
+    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.REMOVE)
+    private List<Order> orders;
 
     private Portfolio() {
     }
