@@ -7,6 +7,7 @@ import application.portfolios.PortfolioRepository;
 import application.securities.Security;
 import application.securities.SecurityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,16 +60,20 @@ public class OrderControllerTest {
 
     @Before
     public void setup() {
-        orderRepository.deleteAllInBatch();
-        portfolioRepository.deleteAllInBatch();
-        securityRepository.deleteAllInBatch();
-
         Portfolio testPortfolio1 = new Portfolio("Test Portfolio1", "");
         Portfolio testPortfolio2 = new Portfolio("Test Portfolio2", "");
 
         setupOrder(testPortfolio1, "FOO", 1);
         setupOrder(testPortfolio2, "BAR", 2);
         setupOrder(testPortfolio1, "BAZ", 3);
+    }
+
+    @After
+    public void tearDown()
+    {
+        orderRepository.deleteAllInBatch();
+        portfolioRepository.deleteAllInBatch();
+        securityRepository.deleteAllInBatch();
     }
 
     @Test

@@ -1,6 +1,7 @@
 package application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,9 +43,13 @@ public class PortfolioControllerTest {
 
     @Before
     public void setup() {
-        portfolioRepository.deleteAllInBatch();
         portfolioRepository.save(new Portfolio("Test Name 1", "Test Description 1"));
         portfolioRepository.save(new Portfolio("Test Name 2", "Test Description 2"));
+    }
+
+    @After
+    public void tearDown() {
+        portfolioRepository.deleteAllInBatch();
     }
 
     @Test

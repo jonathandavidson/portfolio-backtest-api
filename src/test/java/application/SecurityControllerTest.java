@@ -3,6 +3,7 @@ package application;
 import application.securities.Security;
 import application.securities.SecurityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +44,11 @@ public class SecurityControllerTest {
     public void setup() {
         securityRepository.save(new Security("TEST"));
         securityRepository.save(new Security("TEST2"));
+    }
+
+    @After
+    public void tearDown() {
+        securityRepository.deleteAllInBatch();
     }
 
     @Test
