@@ -3,6 +3,7 @@ package application.portfolios;
 import application.orders.Order;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Entity
@@ -12,6 +13,7 @@ public class Portfolio {
     @GeneratedValue
     private long id;
 
+    @NotNull
     private String name;
 
     private String description;

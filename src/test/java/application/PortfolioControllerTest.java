@@ -126,4 +126,13 @@ public class PortfolioControllerTest {
                 .andExpect(jsonPath("$.name", is("Test Add Name")))
                 .andExpect(jsonPath("$.description", is("Test add description")));
     }
+
+    @Test
+    public void addPortfolioThrows400ErrorWhenNameIsOmitted() throws Exception {
+        Portfolio portfolio = new Portfolio(null, "Test add description");
+        mvc.perform(post(basePath).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(status().isBadRequest());
+    }
 }

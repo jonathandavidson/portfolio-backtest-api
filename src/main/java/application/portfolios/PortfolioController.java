@@ -1,9 +1,11 @@
 package application.portfolios;
 
+import application.BadRequestException;
 import application.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 
 @RestController
@@ -19,8 +21,14 @@ class PortfolioController {
 
     @PostMapping
     public Portfolio add(@RequestBody Portfolio input) {
-        return portfolioRepository.save(
-                new Portfolio(input.getName(), input.getDescription()));
+        Portfolio portfolio = new Portfolio(input.getName(), input.getDescription());
+
+        try {
+            return portfolioRepository.save(portfolio);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException("The portfolio could not be added as submitted");
+        }
+
     }
 
     @GetMapping
