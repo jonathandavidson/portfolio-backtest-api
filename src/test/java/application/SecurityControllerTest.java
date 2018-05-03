@@ -70,4 +70,13 @@ public class SecurityControllerTest {
                 .andExpect(jsonPath("$.symbol", is("FOO")));
     }
 
+    @Test
+    public void addSecurityThrows400ErrorWhenNameIsOmitted() throws Exception {
+        Security security = new Security(null);
+        mvc.perform(post("/securities").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(security)))
+                .andExpect(status().isBadRequest());
+    }
+
 }

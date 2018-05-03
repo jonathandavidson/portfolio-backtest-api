@@ -1,8 +1,10 @@
 package application.securities;
 
+import application.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 
 @RestController
@@ -18,8 +20,13 @@ class SecurityController {
 
     @PostMapping
     public Security add(@RequestBody Security input) {
-        return securityRepository.save(
-                new Security(input.getSymbol()));
+        Security security = new Security(input.getSymbol());
+
+        try {
+            return securityRepository.save(security);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException("The security could not be added as submitted");
+        }
     }
 
     @GetMapping

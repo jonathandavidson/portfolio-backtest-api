@@ -28,7 +28,6 @@ class PortfolioController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException("The portfolio could not be added as submitted");
         }
-
     }
 
     @GetMapping
