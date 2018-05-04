@@ -1,11 +1,13 @@
 package application.orders;
 
+import application.BadRequestException;
 import application.ResourceNotFoundException;
 import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 
 @RestController
@@ -30,8 +32,13 @@ public class OrderController {
     @PostMapping("/portfolios/{portfolioId}/orders")
     public Order add(@PathVariable long portfolioId, @RequestBody Order input) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
-        return orderRepository.save(
-                new Order(portfolio, input.getType(), input.getSecurity(), input.getQuantity(), input.getDate()));
+
+        try {
+            return orderRepository.save(
+                    new Order(portfolio, input.getType(), input.getSecurity(), input.getQuantity(), input.getDate()));
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException("The order could not be created as submitted");
+        }
     }
 
     @PutMapping("/portfolios/{portfolioId}/orders/{orderId}")

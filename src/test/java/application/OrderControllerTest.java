@@ -69,8 +69,7 @@ public class OrderControllerTest {
     }
 
     @After
-    public void tearDown()
-    {
+    public void tearDown() {
         orderRepository.deleteAllInBatch();
         portfolioRepository.deleteAllInBatch();
         securityRepository.deleteAllInBatch();
@@ -149,6 +148,54 @@ public class OrderControllerTest {
                 .andExpect((jsonPath("$.type", is("BUY"))))
                 .andExpect((jsonPath("$.security.symbol", is("FOO"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolio.getId()))));
+    }
+
+    @Test
+    public void addOrderThrows400ErrorWhenTypeIsOmitted() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Order order = new Order(portfolio,
+                OrderType.BUY, null, 10, new Date(1514764800001L));
+
+        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void addOrderThrows400ErrorWhenQuantityIsOmitted() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Order order = new Order(portfolio,
+                OrderType.BUY, securityRepository.findBySymbol("FOO"), null, new Date(1514764800001L));
+
+        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void addOrderThrows400ErrorWhenDateIsOmitted() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Order order = new Order(portfolio,
+                OrderType.BUY, securityRepository.findBySymbol("FOO"), 10, null);
+
+        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void addOrderThrows400ErrorWhenSecurityIdIsOmitted() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Order order = new Order(portfolio,
+                OrderType.BUY, null, 10, new Date(1514764800001L));
+
+        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(portfolio)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

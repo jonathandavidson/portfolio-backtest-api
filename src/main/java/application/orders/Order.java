@@ -5,6 +5,7 @@ import application.securities.Security;
 import portfolio.OrderType;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
@@ -19,18 +20,22 @@ public class Order {
     private Portfolio portfolio;
 
     @ManyToOne
+    @NotNull
     private Security security;
 
+    @NotNull
     private OrderType type;
 
-    private int quantity;
+    @NotNull
+    private Integer quantity;
 
+    @NotNull
     private Date date;
 
     private Order() {
     }
 
-    public Order(Portfolio portfolio, OrderType type, Security security, int quantity, Date date) {
+    public Order(Portfolio portfolio, OrderType type, Security security, Integer quantity, Date date) {
         this.portfolio = portfolio;
         this.type = type;
         this.security = security;
@@ -50,7 +55,7 @@ public class Order {
         return type;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
