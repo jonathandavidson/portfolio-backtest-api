@@ -109,6 +109,24 @@ public class PortfolioControllerTest {
     }
 
     @Test
+    public void updatePortfolioIgnoresNullValuesInRequestBody() throws Exception {
+        Portfolio update1 = new Portfolio(null, "Test new description");
+        long id = portfolioRepository.findAll().get(0).getId();
+        mvc.perform(put(basePath + "/" + id).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(update1)))
+                .andExpect(jsonPath("$.name", is("Test Name 1")))
+                .andExpect(jsonPath("$.description", is("Test new description")));
+
+        Portfolio update2 = new Portfolio("Test New Name", null);
+        mvc.perform(put(basePath + "/" + id).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(update2)))
+                .andExpect(jsonPath("$.name", is("Test New Name")))
+                .andExpect(jsonPath("$.description", is("Test new description")));
+    }
+
+    @Test
     public void updatePortfolioThrows404ErrorWhenIdNotFound() throws Exception {
         Portfolio portfolio = new Portfolio("Test New Name", "Test new description");
         mvc.perform(put(basePath + "/1000").accept(contentType)

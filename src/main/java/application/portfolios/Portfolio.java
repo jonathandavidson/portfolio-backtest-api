@@ -42,7 +42,10 @@ public class Portfolio {
     }
 
     public void update(Portfolio portfolio) {
-        this.name = portfolio.name;
-        this.description = portfolio.description;
+        if (portfolio.getName() != null)
+            this.name = portfolio.name;
+
+        if (portfolio.getDescription() != null)
+            this.description = portfolio.description;
     }
 }
