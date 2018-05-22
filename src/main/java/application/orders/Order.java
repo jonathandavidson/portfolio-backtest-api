@@ -68,10 +68,17 @@ public class Order {
     }
 
     public void update(Order order) {
-        this.type = order.getType();
-        this.security = order.getSecurity();
-        this.quantity = order.getQuantity();
-        this.date = order.getDate();
+        if (order.getType() != null)
+            this.type = order.getType();
+
+        if (order.getSecurity() != null)
+            this.security = order.getSecurity();
+
+        if (order.getQuantity() != null)
+            this.quantity = order.getQuantity();
+
+        if (order.getDate() != null)
+            this.date = order.getDate();
     }
 
 }

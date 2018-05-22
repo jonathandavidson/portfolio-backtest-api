@@ -223,6 +223,75 @@ public class OrderControllerTest {
     }
 
     @Test
+    public void updateOrderIgnoresNullValuesInRequestBody() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+        long portfolioId = order.getPortfolioId();
+
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+
+        Order newOrder1 = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), null, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder1)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(1)))
+                .andExpect(jsonPath("$.date", is(1514764800001L)))
+                .andExpect((jsonPath("$.type", is("SELL"))))
+                .andExpect((jsonPath("$.security.symbol", is("BAR"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+
+        Order newOrder2 = new Order(portfolio,
+                null, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder2)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.date", is(1514764800001L)))
+                .andExpect((jsonPath("$.type", is("SELL"))))
+                .andExpect((jsonPath("$.security.symbol", is("BAR"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+
+        Order newOrder3 = new Order(portfolio,
+                OrderType.SELL, null, 10, new Date(1514764800001L));
+
+        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder3)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.date", is(1514764800001L)))
+                .andExpect((jsonPath("$.type", is("SELL"))))
+                .andExpect((jsonPath("$.security.symbol", is("BAR"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+
+        Order newOrder4 = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, null);
+
+        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder4)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.date", is(1514764800001L)))
+                .andExpect((jsonPath("$.type", is("SELL"))))
+                .andExpect((jsonPath("$.security.symbol", is("BAR"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+    }
+
+    @Test
     public void updateOrderThrows404ErrorWhenOrderIdNotFound() throws Exception {
         Portfolio portfolio = portfolioRepository.findAll().get(0);
 
