@@ -6,6 +6,7 @@ import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import portfolio.OrderType;
 
 import javax.validation.ConstraintViolationException;
 import java.util.List;
@@ -32,6 +33,17 @@ public class OrderController {
     @PostMapping("/portfolios/{portfolioId}/orders")
     public Order add(@PathVariable long portfolioId, @RequestBody Order input) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+
+        if (input.getType() == OrderType.SELL) {
+            List<Order> orders = orderRepository
+                    .findBySecurityAndDateLessThan(input.getSecurity(), input.getDate());
+
+            long sum = orders.stream().mapToInt(o -> o.getQuantity()).sum();
+
+            if (sum < input.getQuantity()) {
+                throw new BadRequestException("Invalid order: Can not sell without adequate holdings");
+            }
+        }
 
         try {
             return orderRepository.save(

@@ -51,11 +51,14 @@ public class OrderControllerTest {
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
-    private void setupOrder(Portfolio portfolio, String securitySymbol, int quantity) {
-        securityRepository.save(new Security(securitySymbol));
+    private Security createSecurity(String symbol) {
+        return securityRepository.save(new Security(symbol));
+    }
+
+    private void setupOrder(Portfolio portfolio, String securitySymbol, int quantity, Date date) {
         portfolioRepository.save(portfolio);
         orderRepository.save(new Order(portfolio,
-                OrderType.BUY, securityRepository.findBySymbol(securitySymbol), quantity, new Date(1514764800000L)));
+                OrderType.BUY, securityRepository.findBySymbol(securitySymbol), quantity, date));
     }
 
     private String getUrl(long portfolioId) {
@@ -71,9 +74,15 @@ public class OrderControllerTest {
         Portfolio testPortfolio1 = new Portfolio("Test Portfolio1", "");
         Portfolio testPortfolio2 = new Portfolio("Test Portfolio2", "");
 
-        setupOrder(testPortfolio1, "FOO", 1);
-        setupOrder(testPortfolio2, "BAR", 2);
-        setupOrder(testPortfolio1, "BAZ", 3);
+        Date date = new Date(1514764800000L);
+
+        createSecurity("FOO");
+        createSecurity("BAR");
+        createSecurity("BAZ");
+
+        setupOrder(testPortfolio1, "FOO", 1, date);
+        setupOrder(testPortfolio2, "BAR", 2, date);
+        setupOrder(testPortfolio1, "BAZ", 3, date);
     }
 
     @After
@@ -140,7 +149,7 @@ public class OrderControllerTest {
     }
 
     @Test
-    public void addOrder() throws Exception {
+    public void addBuyOrder() throws Exception {
         Portfolio portfolio = portfolioRepository.findAll().get(0);
 
         Order order = new Order(portfolio,
@@ -154,6 +163,26 @@ public class OrderControllerTest {
                 .andExpect(jsonPath("$.quantity", is(10)))
                 .andExpect(jsonPath("$.date", is(1514764800001L)))
                 .andExpect((jsonPath("$.type", is("BUY"))))
+                .andExpect((jsonPath("$.security.symbol", is("FOO"))))
+                .andExpect((jsonPath("$.portfolioId", is((int) portfolio.getId()))));
+    }
+
+
+    @Test
+    public void addSellOrder() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+
+        Order order = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("FOO"), 1, new Date(1514764800005L));
+
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.quantity", is(1)))
+                .andExpect(jsonPath("$.date", is(1514764800005L)))
+                .andExpect((jsonPath("$.type", is("SELL"))))
                 .andExpect((jsonPath("$.security.symbol", is("FOO"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolio.getId()))));
     }
@@ -200,7 +229,22 @@ public class OrderControllerTest {
         Order order = new Order(portfolio,
                 OrderType.BUY, null, 10, new Date(1514764800001L));
 
-        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void addOrderThrows400ErrorWhenSellOrderNotPrecededByAdequateBuyOrders() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        setupOrder(portfolio, "FOO", 1, new Date(1514764800001L));
+        setupOrder(portfolio, "FOO", 1, new Date(1514764800003L));
+
+        Order order = new Order(portfolio,
+                OrderType.SELL, securityRepository.findBySymbol("FOO"), 3, new Date(1514764800002L));
+
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(order)))
                 .andExpect(status().isBadRequest());
