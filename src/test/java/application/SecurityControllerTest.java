@@ -40,6 +40,10 @@ public class SecurityControllerTest {
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
+    private String getUrl() {
+        return "/securities";
+    }
+
     @Before
     public void setup() {
         securityRepository.save(new Security("TEST"));
@@ -53,7 +57,7 @@ public class SecurityControllerTest {
 
     @Test
     public void getSecurityList() throws Exception {
-        mvc.perform(get("/securities").accept(contentType))
+        mvc.perform(get(getUrl()).accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -64,7 +68,7 @@ public class SecurityControllerTest {
     @Test
     public void addSecurity() throws Exception {
         Security security = new Security("FOO");
-        mvc.perform(post("/securities").accept(contentType)
+        mvc.perform(post(getUrl()).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(security)))
                 .andExpect(jsonPath("$.symbol", is("FOO")));
@@ -73,7 +77,7 @@ public class SecurityControllerTest {
     @Test
     public void addSecurityThrows400ErrorWhenNameIsOmitted() throws Exception {
         Security security = new Security(null);
-        mvc.perform(post("/securities").accept(contentType)
+        mvc.perform(post(getUrl()).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(security)))
                 .andExpect(status().isBadRequest());

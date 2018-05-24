@@ -58,6 +58,14 @@ public class OrderControllerTest {
                 OrderType.BUY, securityRepository.findBySymbol(securitySymbol), quantity, new Date(1514764800000L)));
     }
 
+    private String getUrl(long portfolioId) {
+        return "/portfolios/" + portfolioId + "/orders";
+    }
+
+    private String getUrl(long portfolioId, long orderId) {
+        return getUrl(portfolioId) + "/" + orderId;
+    }
+
     @Before
     public void setup() {
         Portfolio testPortfolio1 = new Portfolio("Test Portfolio1", "");
@@ -79,7 +87,7 @@ public class OrderControllerTest {
     public void getOrders() throws Exception {
         long portfolioId = portfolioRepository.findAll().get(0).getId();
 
-        mvc.perform(get("/portfolios/" + portfolioId + "/orders").accept(contentType))
+        mvc.perform(get(getUrl(portfolioId)).accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -95,11 +103,11 @@ public class OrderControllerTest {
         long orderId = order.getId();
         long portfolioId = order.getPortfolioId();
 
-        mvc.perform(delete("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(delete(getUrl(portfolioId, orderId))
                 .accept(contentType))
                 .andExpect(status().isOk());
 
-        mvc.perform(get("/portfolios/" + portfolioId + "/orders/").accept(contentType))
+        mvc.perform(get(getUrl(portfolioId)).accept(contentType))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].security.symbol", is("BAZ")));
     }
@@ -107,7 +115,7 @@ public class OrderControllerTest {
     @Test
     public void deleteOrderThrows404ErrorWhenOrderIdNotFound() throws Exception {
         long portfolioId = portfolioRepository.findAll().get(0).getId();
-        mvc.perform(delete("/portfolios/" + portfolioId + "/orders/1000").accept(contentType))
+        mvc.perform(delete(getUrl(portfolioId, 1000)).accept(contentType))
                 .andExpect(status().isNotFound());
     }
 
@@ -116,7 +124,7 @@ public class OrderControllerTest {
         Order order = orderRepository.findAll().get(0);
         long orderId = order.getId();
 
-        mvc.perform(delete("/portfolios/1000/orders/" + orderId).accept(contentType))
+        mvc.perform(delete(getUrl(1000, orderId)).accept(contentType))
                 .andExpect(status().isNotFound());
     }
 
@@ -127,7 +135,7 @@ public class OrderControllerTest {
         Order order = orderRepository.findAll().get(1);
         long portfolioId = order.getPortfolioId();
 
-        mvc.perform(delete("/portfolios/" + portfolioId + "/orders/" + orderId).accept(contentType))
+        mvc.perform(delete(getUrl(portfolioId, orderId)).accept(contentType))
                 .andExpect(status().isNotFound());
     }
 
@@ -138,7 +146,7 @@ public class OrderControllerTest {
         Order order = new Order(portfolio,
                 OrderType.BUY, securityRepository.findBySymbol("FOO"), 10, new Date(1514764800001L));
 
-        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(order)))
                 .andExpect(status().isOk())
@@ -156,7 +164,7 @@ public class OrderControllerTest {
         Order order = new Order(portfolio,
                 OrderType.BUY, null, 10, new Date(1514764800001L));
 
-        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(portfolio)))
                 .andExpect(status().isBadRequest());
@@ -168,7 +176,7 @@ public class OrderControllerTest {
         Order order = new Order(portfolio,
                 OrderType.BUY, securityRepository.findBySymbol("FOO"), null, new Date(1514764800001L));
 
-        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(portfolio)))
                 .andExpect(status().isBadRequest());
@@ -180,7 +188,7 @@ public class OrderControllerTest {
         Order order = new Order(portfolio,
                 OrderType.BUY, securityRepository.findBySymbol("FOO"), 10, null);
 
-        mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(portfolio)))
                 .andExpect(status().isBadRequest());
@@ -194,7 +202,7 @@ public class OrderControllerTest {
 
         mvc.perform(post("/portfolios/" + portfolio.getId() + "/orders/").accept(contentType)
                 .contentType(contentType)
-                .content(objectMapper.writeValueAsString(portfolio)))
+                .content(objectMapper.writeValueAsString(order)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -209,7 +217,7 @@ public class OrderControllerTest {
         Order newOrder = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder)))
@@ -233,7 +241,7 @@ public class OrderControllerTest {
         Order newOrder1 = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("BAR"), null, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder1)))
@@ -248,7 +256,7 @@ public class OrderControllerTest {
         Order newOrder2 = new Order(portfolio,
                 null, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder2)))
@@ -263,7 +271,7 @@ public class OrderControllerTest {
         Order newOrder3 = new Order(portfolio,
                 OrderType.SELL, null, 10, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder3)))
@@ -278,7 +286,7 @@ public class OrderControllerTest {
         Order newOrder4 = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, null);
 
-        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder4)))
@@ -298,7 +306,7 @@ public class OrderControllerTest {
         Order newOrder = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/" + portfolio.getId() + "/orders/1000")
+        mvc.perform(put(getUrl(portfolio.getId(), 1000))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder)))
@@ -315,7 +323,7 @@ public class OrderControllerTest {
         Order newOrder = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/1000/orders/" + orderId)
+        mvc.perform(put(getUrl(1000, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder)))
@@ -333,7 +341,7 @@ public class OrderControllerTest {
         Order newOrder = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
 
-        mvc.perform(put("/portfolios/" + portfolioId + "/orders/" + orderId)
+        mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(newOrder)))
