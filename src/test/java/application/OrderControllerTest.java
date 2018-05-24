@@ -162,7 +162,7 @@ public class OrderControllerTest {
     public void addOrderThrows400ErrorWhenTypeIsOmitted() throws Exception {
         Portfolio portfolio = portfolioRepository.findAll().get(0);
         Order order = new Order(portfolio,
-                OrderType.BUY, null, 10, new Date(1514764800001L));
+                null, securityRepository.findBySymbol("FOO"), 10, new Date(1514764800001L));
 
         mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
