@@ -54,9 +54,23 @@ public class OrderController {
     }
 
     @PutMapping("/portfolios/{portfolioId}/orders/{orderId}")
-    public Order add(@PathVariable long portfolioId, @PathVariable long orderId, @RequestBody Order input) {
+    public Order update(@PathVariable long portfolioId, @PathVariable long orderId, @RequestBody Order input) {
         Order order = findOne(orderId, portfolioId);
         order.update(input);
+
+        if (order.getType() == OrderType.SELL) {
+            List<Order> orders = orderRepository
+                    .findBySecurityAndDateLessThan(order.getSecurity(), order.getDate());
+
+            long sum = orders.stream()
+                    .filter(record -> record.getId() != orderId)
+                    .mapToInt(o -> o.getQuantity()).sum();
+
+            if (sum < order.getQuantity()) {
+                throw new BadRequestException("Invalid order: Can not sell without adequate holdings");
+            }
+        }
+
         return orderRepository.save(order);
     }
 

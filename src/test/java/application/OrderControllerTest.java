@@ -81,8 +81,10 @@ public class OrderControllerTest {
         createSecurity("BAZ");
 
         setupOrder(testPortfolio1, "FOO", 1, date);
+        setupOrder(testPortfolio1, "BAR", 10, date);
         setupOrder(testPortfolio2, "BAR", 2, date);
         setupOrder(testPortfolio1, "BAZ", 3, date);
+        setupOrder(testPortfolio1, "FOO", 1, date);
     }
 
     @After
@@ -99,7 +101,7 @@ public class OrderControllerTest {
         mvc.perform(get(getUrl(portfolioId)).accept(contentType))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$", hasSize(4)))
                 .andExpect(jsonPath("$[0].quantity", is(1)))
                 .andExpect(jsonPath("$[0].date", is(1514764800000L)))
                 .andExpect((jsonPath("$[0].type", is("BUY"))))
@@ -117,8 +119,8 @@ public class OrderControllerTest {
                 .andExpect(status().isOk());
 
         mvc.perform(get(getUrl(portfolioId)).accept(contentType))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].security.symbol", is("BAZ")));
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].security.symbol", is("BAR")));
     }
 
     @Test
@@ -141,7 +143,7 @@ public class OrderControllerTest {
     public void deleteOrderThrows404ErrorWhenOrderIdNotFoundInPortfolio() throws Exception {
         long orderId = orderRepository.findAll().get(0).getId();
 
-        Order order = orderRepository.findAll().get(1);
+        Order order = orderRepository.findAll().get(2);
         long portfolioId = order.getPortfolioId();
 
         mvc.perform(delete(getUrl(portfolioId, orderId)).accept(contentType))
@@ -236,17 +238,28 @@ public class OrderControllerTest {
     }
 
     @Test
-    public void addOrderThrows400ErrorWhenSellOrderNotPrecededByAdequateBuyOrders() throws Exception {
+    public void addOrUpdateOrderThrows400ErrorWhenSellOrderNotPrecededByAdequateBuyOrders() throws Exception {
         Portfolio portfolio = portfolioRepository.findAll().get(0);
         setupOrder(portfolio, "FOO", 1, new Date(1514764800001L));
         setupOrder(portfolio, "FOO", 1, new Date(1514764800003L));
 
         Order order = new Order(portfolio,
-                OrderType.SELL, securityRepository.findBySymbol("FOO"), 3, new Date(1514764800002L));
+                OrderType.SELL, securityRepository.findBySymbol("FOO"), 4, new Date(1514764800002L));
 
         mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
                 .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isBadRequest());
+
+        Order orderToUpdate = orderRepository.findAll().get(0);
+
+        Order newOrder = new Order(portfolio,
+                OrderType.SELL, null, null, null);
+
+        mvc.perform(put(getUrl(portfolio.getId(), orderToUpdate.getId()))
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -298,7 +311,7 @@ public class OrderControllerTest {
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
 
         Order newOrder2 = new Order(portfolio,
-                null, securityRepository.findBySymbol("BAR"), 10, new Date(1514764800001L));
+                null, securityRepository.findBySymbol("BAR"), 2, new Date(1514764800001L));
 
         mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
@@ -306,14 +319,14 @@ public class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(newOrder2)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.quantity", is(2)))
                 .andExpect(jsonPath("$.date", is(1514764800001L)))
                 .andExpect((jsonPath("$.type", is("SELL"))))
                 .andExpect((jsonPath("$.security.symbol", is("BAR"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
 
         Order newOrder3 = new Order(portfolio,
-                OrderType.SELL, null, 10, new Date(1514764800001L));
+                OrderType.SELL, null, 1, new Date(1514764800001L));
 
         mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
@@ -321,14 +334,14 @@ public class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(newOrder3)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.quantity", is(1)))
                 .andExpect(jsonPath("$.date", is(1514764800001L)))
                 .andExpect((jsonPath("$.type", is("SELL"))))
                 .andExpect((jsonPath("$.security.symbol", is("BAR"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
 
         Order newOrder4 = new Order(portfolio,
-                OrderType.SELL, securityRepository.findBySymbol("BAR"), 10, null);
+                OrderType.SELL, securityRepository.findBySymbol("BAR"), 2, null);
 
         mvc.perform(put(getUrl(portfolioId, orderId))
                 .accept(contentType)
@@ -336,7 +349,7 @@ public class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(newOrder4)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$.quantity", is(10)))
+                .andExpect(jsonPath("$.quantity", is(2)))
                 .andExpect(jsonPath("$.date", is(1514764800001L)))
                 .andExpect((jsonPath("$.type", is("SELL"))))
                 .andExpect((jsonPath("$.security.symbol", is("BAR"))))
