@@ -11,4 +11,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByPortfolio(Portfolio portfolio);
 
     List<Order> findBySecurityAndDateLessThan(Security security, Date date);
+
+    List<Order> findByPortfolioAndSecurityAndDateLessThan(Portfolio portfolio, Security security, Date date);
 }

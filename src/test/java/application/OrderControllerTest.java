@@ -240,8 +240,11 @@ public class OrderControllerTest {
     @Test
     public void addOrUpdateOrderThrows400ErrorWhenSellOrderNotPrecededByAdequateBuyOrders() throws Exception {
         Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Portfolio anotherPortfolio = portfolioRepository.findAll().get(1);
+
         setupOrder(portfolio, "FOO", 1, new Date(1514764800001L));
         setupOrder(portfolio, "FOO", 1, new Date(1514764800003L));
+        setupOrder(anotherPortfolio, "FOO", 1, new Date(1514764800001L));
 
         Order order = new Order(portfolio,
                 OrderType.SELL, securityRepository.findBySymbol("FOO"), 4, new Date(1514764800002L));

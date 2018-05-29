@@ -36,7 +36,7 @@ public class OrderController {
 
         if (input.getType() == OrderType.SELL) {
             List<Order> orders = orderRepository
-                    .findBySecurityAndDateLessThan(input.getSecurity(), input.getDate());
+                    .findByPortfolioAndSecurityAndDateLessThan(portfolio, input.getSecurity(), input.getDate());
 
             long sum = orders.stream().mapToInt(o -> o.getQuantity()).sum();
 
@@ -55,12 +55,13 @@ public class OrderController {
 
     @PutMapping("/portfolios/{portfolioId}/orders/{orderId}")
     public Order update(@PathVariable long portfolioId, @PathVariable long orderId, @RequestBody Order input) {
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         Order order = findOne(orderId, portfolioId);
         order.update(input);
 
         if (order.getType() == OrderType.SELL) {
             List<Order> orders = orderRepository
-                    .findBySecurityAndDateLessThan(order.getSecurity(), order.getDate());
+                    .findByPortfolioAndSecurityAndDateLessThan(portfolio, order.getSecurity(), order.getDate());
 
             long sum = orders.stream()
                     .filter(record -> record.getId() != orderId)
