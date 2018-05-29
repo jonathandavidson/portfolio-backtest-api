@@ -238,6 +238,18 @@ public class OrderControllerTest {
     }
 
     @Test
+    public void addOrderThrows400ErrorWhenQuantityIsNegative() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Order order = new Order(portfolio,
+                OrderType.BUY, null, -10, new Date(1514764800001L));
+
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     public void addOrUpdateOrderThrows400ErrorWhenSellOrderNotPrecededByAdequateBuyOrders() throws Exception {
         Portfolio portfolio = portfolioRepository.findAll().get(0);
         Portfolio anotherPortfolio = portfolioRepository.findAll().get(1);
@@ -288,6 +300,24 @@ public class OrderControllerTest {
                 .andExpect((jsonPath("$.type", is("SELL"))))
                 .andExpect((jsonPath("$.security.symbol", is("BAR"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+    }
+
+    @Test
+    public void updateOrderThrows400ErrorWhenQuantityIsNegative() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+        long portfolioId = order.getPortfolioId();
+
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+
+        Order newOrder = new Order(portfolio,
+                null, null, -10, null);
+
+        mvc.perform(put(getUrl(portfolioId, orderId))
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

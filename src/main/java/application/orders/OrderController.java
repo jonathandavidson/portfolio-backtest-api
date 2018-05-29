@@ -5,6 +5,7 @@ import application.ResourceNotFoundException;
 import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.*;
 import portfolio.OrderType;
 
@@ -72,7 +73,11 @@ public class OrderController {
             }
         }
 
-        return orderRepository.save(order);
+        try {
+            return orderRepository.save(order);
+        } catch (TransactionSystemException e) {
+            throw new BadRequestException("The order could not be updated as submitted");
+        }
     }
 
     @DeleteMapping("/portfolios/{portfolioId}/orders/{orderId}")

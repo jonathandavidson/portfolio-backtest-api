@@ -5,6 +5,7 @@ import application.securities.Security;
 import portfolio.OrderType;
 
 import javax.persistence.*;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
@@ -27,6 +28,7 @@ public class Order {
     private OrderType type;
 
     @NotNull
+    @Min(value = 1)
     private Integer quantity;
 
     @NotNull
