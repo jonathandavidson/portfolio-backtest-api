@@ -4,6 +4,7 @@ import application.securities.Security;
 import application.securities.SecurityRepository;
 import application.securities.prices.Price;
 import application.securities.prices.PriceRepository;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,12 @@ public class PriceControllerTest {
         createPrice(1514764800001L, sec2, 1.50);
     }
 
+    @After
+    public void tearDown() {
+        priceRepository.deleteAllInBatch();
+        securityRepository.deleteAllInBatch();
+    }
+
     private Price createPrice(long date, Security security, double value) {
         Price price = new Price(new Date(date),
                 security, BigDecimal.valueOf(value));
@@ -69,5 +76,11 @@ public class PriceControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].date", is(1514764800000L)))
                 .andExpect(jsonPath("$[0].value", is(1.00)));
+    }
+
+    @Test
+    public void getPricesThrows404WhenInvalidSecurityIdPassed() throws Exception {
+        mvc.perform(get("/securities/1000/prices"))
+                .andExpect(status().isNotFound());
     }
 }

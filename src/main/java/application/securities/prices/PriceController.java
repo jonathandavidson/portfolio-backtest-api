@@ -1,5 +1,6 @@
 package application.securities.prices;
 
+import application.ResourceNotFoundException;
 import application.securities.Security;
 import application.securities.SecurityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,12 @@ public class PriceController {
     @GetMapping("/securities/{securityId}/prices")
     public List<Price> getPrices(@PathVariable long securityId) {
         Security security = securityRepository.findOne(securityId);
+
+        if (security == null) {
+            throw new ResourceNotFoundException(
+                    String.format("The security with id %d does not exist", securityId));
+        }
+
         return priceRepository.findBySecurity(security);
     }
 
