@@ -13,6 +13,7 @@ import javax.validation.ConstraintViolationException;
 import java.util.List;
 
 @RestController
+@RequestMapping("/portfolios")
 public class OrderController {
 
     private final OrderRepository orderRepository;
@@ -25,13 +26,13 @@ public class OrderController {
         this.portfolioRepository = portfolioRepository;
     }
 
-    @GetMapping("/portfolios/{portfolioId}/orders")
+    @GetMapping("/{portfolioId}/orders")
     public List<Order> index(@PathVariable long portfolioId) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         return this.orderRepository.findByPortfolio(portfolio);
     }
 
-    @PostMapping("/portfolios/{portfolioId}/orders")
+    @PostMapping("/{portfolioId}/orders")
     public Order add(@PathVariable long portfolioId, @RequestBody Order input) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
 
@@ -54,7 +55,7 @@ public class OrderController {
         }
     }
 
-    @PutMapping("/portfolios/{portfolioId}/orders/{orderId}")
+    @PutMapping("/{portfolioId}/orders/{orderId}")
     public Order update(@PathVariable long portfolioId, @PathVariable long orderId, @RequestBody Order input) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         Order order = findOne(orderId, portfolioId);
@@ -80,7 +81,7 @@ public class OrderController {
         }
     }
 
-    @DeleteMapping("/portfolios/{portfolioId}/orders/{orderId}")
+    @DeleteMapping("/{portfolioId}/orders/{orderId}")
     public void delete(@PathVariable long portfolioId, @PathVariable long orderId) {
         Order order = findOne(orderId, portfolioId);
         orderRepository.delete(order);
