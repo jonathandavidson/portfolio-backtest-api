@@ -32,10 +32,10 @@ A financial security that can be purchased or sold through an order on a portfol
 Prices for a given security at a specific time
 
 * `GET` `/securities/{id}/prices` - Returns all prices for a security
-* `GET` `/securities/{id}/prices?start={mm/dd/yyyy}&end={mm/dd/yyyy}` - Returns prices for a security between the date range specified
+* `GET` `/securities/{id}/prices?start={startDate}&end={endDate}` - Returns prices for a security between the ISO 8601 date range specified
 
 ### Holdings
 
 A snapshot of values and statistics of securities held over a period of time
 
-* `GET` `portfolios/{id}/holdings?start={mm/dd/yyyy}&end={mm/dd/yyyy}&interval={days}` - Returns holdings between the date range and interval specified
+* `GET` `portfolios/{id}/holdings?start={startDate}&end={endDate}&interval={days}` - Returns holdings between the ISO 8601 date range and interval specified

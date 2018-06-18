@@ -46,7 +46,10 @@ public class PriceControllerTest {
     public void setup() {
         Security sec1 = createSecurity("FOO");
         Security sec2 = createSecurity("BAR");
-        createPrice(1514764800000L, sec1, 1.00);
+        createPrice(1514764700000L, sec1, 1.00);
+        createPrice(1514764800001L, sec1, 1.00);
+        createPrice(1517443200000L, sec1, 1.00);
+        createPrice(1529020800000L, sec1, 1.00);
         createPrice(1514764800001L, sec2, 1.50);
     }
 
@@ -69,12 +72,12 @@ public class PriceControllerTest {
 
     @Test
     public void getPricesWithNoParamsReturnsAllPrices() throws Exception {
-        long securityId = securityRepository.findAll().get(0).getId();
+        long securityId = securityRepository.findBySymbol("FOO").getId();
         mvc.perform(get("/securities/" + securityId + "/prices"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].date", is(1514764800000L)))
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[0].date", is(1514764700000L)))
                 .andExpect(jsonPath("$[0].value", is(1.00)));
     }
 
@@ -82,5 +85,30 @@ public class PriceControllerTest {
     public void getPricesThrows404WhenInvalidSecurityIdPassed() throws Exception {
         mvc.perform(get("/securities/1000/prices"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void getPricesWithDateParamsReturnsPricesBetweenDateRange() throws Exception {
+        long securityId = securityRepository.findBySymbol("FOO").getId();
+        String paramString = "start=2018-01-01T00:00:00+00:00&end=2018-02-03T00:00:00+00:00";
+        mvc.perform(get("/securities/" + securityId + "/prices?" + paramString))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
+    public void getPricesWithInvalidStartDateParamReturns400Response() throws Exception {
+        long securityId = securityRepository.findBySymbol("FOO").getId();
+        String paramString = "start=someInvalidDate";
+        mvc.perform(get("/securities/" + securityId + "/prices?" + paramString))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void getPricesWithInvalidEndDateParamReturns400Response() throws Exception {
+        long securityId = securityRepository.findBySymbol("FOO").getId();
+        String paramString = "end=someInvalidDate";
+        mvc.perform(get("/securities/" + securityId + "/prices?" + paramString))
+                .andExpect(status().isBadRequest());
     }
 }
