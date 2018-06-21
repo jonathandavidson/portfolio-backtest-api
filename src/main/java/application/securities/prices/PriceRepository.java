@@ -13,4 +13,5 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
     public List<Price> findBySecurityAndDateBetween(
             Security security, Date startDate, Date endDate);
 
+    public Price findFirstBySecurityOrderByDateAsc(Security security);
 }

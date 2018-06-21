@@ -6,6 +6,8 @@ import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
 import application.securities.Security;
 import application.securities.SecurityRepository;
+import application.securities.prices.Price;
+import application.securities.prices.PriceRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +21,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import portfolio.OrderType;
 
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.Date;
 
@@ -42,6 +45,9 @@ public class OrderControllerTest {
     private PortfolioRepository portfolioRepository;
 
     @Autowired
+    private PriceRepository priceRepository;
+
+    @Autowired
     private SecurityRepository securityRepository;
 
     @Autowired
@@ -51,8 +57,18 @@ public class OrderControllerTest {
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
-    private Security createSecurity(String symbol) {
-        return securityRepository.save(new Security(symbol));
+
+    private void createSecurity(String symbol) {
+        Security security = securityRepository.save(new Security(symbol));
+        createPrice(security, 1512086400000L, 1.0);
+        createPrice(security, 1517443200000L, 1.0);
+    }
+
+    private void createPrice(Security security, long timestamp, double value) {
+        Price price = new Price(new Date(timestamp),
+                security, BigDecimal.valueOf(value));
+
+        priceRepository.save(price);
     }
 
     private void setupOrder(Portfolio portfolio, String securitySymbol, int quantity, Date date) {
@@ -89,6 +105,7 @@ public class OrderControllerTest {
 
     @After
     public void tearDown() {
+        priceRepository.deleteAllInBatch();
         orderRepository.deleteAllInBatch();
         portfolioRepository.deleteAllInBatch();
         securityRepository.deleteAllInBatch();
@@ -221,7 +238,20 @@ public class OrderControllerTest {
 
         mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
                 .contentType(contentType)
-                .content(objectMapper.writeValueAsString(portfolio)))
+                .content(objectMapper.writeValueAsString(order)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void addOrderThrows400ErrorWhenDateIsOutOfRange() throws Exception {
+        Portfolio portfolio = portfolioRepository.findAll().get(0);
+        Order order = new Order(portfolio,
+                OrderType.BUY, securityRepository.findBySymbol("FOO"),
+                10, new Date(1512000000000L));
+
+        mvc.perform(post(getUrl(portfolio.getId())).accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(order)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -300,6 +330,25 @@ public class OrderControllerTest {
                 .andExpect((jsonPath("$.type", is("SELL"))))
                 .andExpect((jsonPath("$.security.symbol", is("BAR"))))
                 .andExpect((jsonPath("$.portfolioId", is((int) portfolioId))));
+    }
+
+
+    @Test
+    public void updateOrderThrows400ErrorWhenDateIsOutOfRange() throws Exception {
+        Order order = orderRepository.findAll().get(0);
+        long orderId = order.getId();
+        long portfolioId = order.getPortfolioId();
+
+        Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+
+        Order newOrder = new Order(portfolio,
+                OrderType.BUY, securityRepository.findBySymbol("BAR"), 10, new Date(1512000000000L));
+
+        mvc.perform(put(getUrl(portfolioId, orderId))
+                .accept(contentType)
+                .contentType(contentType)
+                .content(objectMapper.writeValueAsString(newOrder)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -4,6 +4,9 @@ import application.BadRequestException;
 import application.ResourceNotFoundException;
 import application.portfolios.Portfolio;
 import application.portfolios.PortfolioRepository;
+import application.securities.Security;
+import application.securities.prices.Price;
+import application.securities.prices.PriceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +23,17 @@ public class OrderController {
 
     private final PortfolioRepository portfolioRepository;
 
+    private final PriceRepository priceRepository;
+
     @Autowired
-    OrderController(OrderRepository orderRepository, PortfolioRepository portfolioRepository) {
+    OrderController(
+            OrderRepository orderRepository,
+            PortfolioRepository portfolioRepository,
+            PriceRepository priceRepository
+    ) {
         this.orderRepository = orderRepository;
         this.portfolioRepository = portfolioRepository;
+        this.priceRepository = priceRepository;
     }
 
     @GetMapping("/{portfolioId}/orders")
@@ -35,6 +45,7 @@ public class OrderController {
     @PostMapping("/{portfolioId}/orders")
     public Order add(@PathVariable long portfolioId, @RequestBody Order input) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
+        checkDateRange(input, input.getSecurity());
 
         if (input.getType() == OrderType.SELL) {
             List<Order> orders = orderRepository
@@ -55,11 +66,21 @@ public class OrderController {
         }
     }
 
+    private void checkDateRange(@RequestBody Order input, Security security) {
+        if (security != null) {
+            Price earliest = priceRepository.findFirstBySecurityOrderByDateAsc(security);
+            if (input.getDate() != null && input.getDate().before(earliest.getDate())) {
+                throw new BadRequestException("The date can not be earlier than the first security price");
+            }
+        }
+    }
+
     @PutMapping("/{portfolioId}/orders/{orderId}")
     public Order update(@PathVariable long portfolioId, @PathVariable long orderId, @RequestBody Order input) {
         Portfolio portfolio = portfolioRepository.findOne(portfolioId);
         Order order = findOne(orderId, portfolioId);
         order.update(input);
+        checkDateRange(input, input.getSecurity());
 
         if (order.getType() == OrderType.SELL) {
             List<Order> orders = orderRepository
