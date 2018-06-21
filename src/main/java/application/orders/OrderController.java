@@ -58,21 +58,15 @@ public class OrderController {
             }
         }
 
-        try {
-            return orderRepository.save(
-                    new Order(portfolio, input.getType(), input.getSecurity(), input.getQuantity(), input.getDate()));
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException("The order could not be created as submitted");
-        }
-    }
+        Order order = new Order(
+                portfolio,
+                input.getType(),
+                input.getSecurity(),
+                input.getQuantity(),
+                input.getDate()
+        );
 
-    private void checkDateRange(@RequestBody Order input, Security security) {
-        if (security != null) {
-            Price earliest = priceRepository.findFirstBySecurityOrderByDateAsc(security);
-            if (input.getDate() != null && input.getDate().before(earliest.getDate())) {
-                throw new BadRequestException("The date can not be earlier than the first security price");
-            }
-        }
+        return saveOrder(order, "The order could not be created as submitted");
     }
 
     @PutMapping("/{portfolioId}/orders/{orderId}")
@@ -95,11 +89,7 @@ public class OrderController {
             }
         }
 
-        try {
-            return orderRepository.save(order);
-        } catch (TransactionSystemException e) {
-            throw new BadRequestException("The order could not be updated as submitted");
-        }
+        return saveOrder(order, "The order could not be updated as submitted");
     }
 
     @DeleteMapping("/{portfolioId}/orders/{orderId}")
@@ -118,6 +108,23 @@ public class OrderController {
                     "The order with id %d does not exist in portfolio with id %d", orderId, portfolioId)));
         }
         return order;
+    }
+
+    private void checkDateRange(@RequestBody Order input, Security security) {
+        if (security != null) {
+            Price earliest = priceRepository.findFirstBySecurityOrderByDateAsc(security);
+            if (input.getDate() != null && input.getDate().before(earliest.getDate())) {
+                throw new BadRequestException("The date can not be earlier than the first security price");
+            }
+        }
+    }
+
+    private Order saveOrder(Order order, String failMessage) {
+        try {
+            return orderRepository.save(order);
+        } catch (ConstraintViolationException | TransactionSystemException e) {
+            throw new BadRequestException(failMessage);
+        }
     }
 
 }
